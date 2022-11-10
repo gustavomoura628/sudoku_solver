@@ -146,15 +146,15 @@ void print_sudoku(struct sudoku * s)
         for(j=0;j<s->size;j++)
         {
             printf(" %2d ",s->table[j+i*s->size]);
-            if(j%s->blocksize==s->blocksize-1)printf("||");
+            if(j%s->blocksize==s->blocksize-1 && j<s->size-1)printf("\033[40;30m||\033[47;30m");
         }
         printf("\033[m");
         printf("\n");
-        printf("\033[47;30m");
-        if(i%s->blocksize==s->blocksize-1)
+        if(i%s->blocksize==s->blocksize-1 && i < s->size-1)
         {
             int k;
-            for(k=0;k<4*s->size+2*s->blocksize;k++)printf("|");
+            printf("\033[40;30m");
+            for(k=0;k<4*s->size+2*(s->blocksize-1);k++)printf("|");
             printf("\033[m");
             printf("\n");
         }
