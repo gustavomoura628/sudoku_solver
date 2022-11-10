@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
-#define VERSION "0.3"
+#define VERSION "0.4"
 
 unsigned int FAILED = 0;
 
@@ -352,9 +353,20 @@ int main()
 
     setup(s);
     //print_sudoku(s);
+    struct timespec time_start;
+    timespec_get(&time_start,TIME_UTC);
+
     solve(s);
+
+    struct timespec time_end;
+    timespec_get(&time_end,TIME_UTC);
+
+
+    float time_difference = time_end.tv_sec - time_start.tv_sec + (time_end.tv_nsec - time_start.tv_nsec)/(float)1000000000 ;
+
     printf("\n");
     print_sudoku(s);
     printf("Number of boards explored = %u\n",FAILED);
+    printf("Elapsed time = %.3fs\n",time_difference);
     destroy(s);
 }
