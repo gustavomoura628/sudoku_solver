@@ -1,6 +1,6 @@
 # Sudoku Solver
 
-A sudoku solver for arbitrary sized boards that uses constraint propagation, dfs and bit representation of sets to find a solution.
+A sudoku solver for arbitrarily sized boards that uses constraint propagation, dfs and bit representation of sets to find a solution.
 
 ## Set up
 gcc -o sudoku sudoku.c
