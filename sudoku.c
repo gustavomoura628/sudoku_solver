@@ -101,7 +101,17 @@ void setup(struct sudoku * s)
         for(j=0;j<s->size;j++)
         {
             if(s->table[j+i*s->size])
+            {
+                long unsigned before = s->brow[i];
                 s->brow[i]&=~(1<<(s->table[j+i*s->size]-1));
+                // if constraints dont change it means that the number was there before
+                if(before == s->brow[i])
+                {
+                    fprintf(stderr, "Invalid input: invalid row %d\n",i);
+                    s->status = 2;
+                    return;
+                }
+            }
         }
 //        printf("row %d = ",i);
 //        print_bits(s->brow[i]);
@@ -113,7 +123,17 @@ void setup(struct sudoku * s)
         for(i=0;i<s->size;i++)
         {
             if(s->table[j+i*s->size])
+            {
+                long unsigned before = s->bcolumn[j];
                 s->bcolumn[j]&=~(1<<(s->table[j+i*s->size]-1));
+                // if constraints dont change this means number was there before
+                if(before == s->bcolumn[j])
+                {
+                    fprintf(stderr, "Invalid input: invalid column %d\n",j);
+                    s->status = 2;
+                    return;
+                }
+            }
         }
 //        printf("column %d = ",j);
 //        print_bits(s->bcolumn[j]);
@@ -127,7 +147,17 @@ void setup(struct sudoku * s)
         for(j=0;j<s->size;j++)
         {
             if(s->table[j+i*s->size])
+            {
+                long unsigned before = s->bblock[j/s->blocksize + (i/s->blocksize)*s->blocksize];
                 s->bblock[j/s->blocksize + (i/s->blocksize)*s->blocksize]&=~(1<<(s->table[j+i*s->size]-1));
+                // if constraints dont change this means number was there before
+                if(before == s->bblock[j/s->blocksize + (i/s->blocksize)*s->blocksize])
+                {
+                    fprintf(stderr, "Invalid input: invalid block %d\n", j/s->blocksize + (i/s->blocksize)*s->blocksize);
+                    s->status = 2;
+                    return;
+                }
+            }
         }
     }
 //    for(i=0;i<s->size;i++)
@@ -343,32 +373,62 @@ struct sudoku * read_sudoku_from_stdin()
     int i;
     printf("Enter sudoku table: ");
     for(i=0;i<s->size*s->size;i++)
+    {
         scanf("%u",&s->table[i]);
+        if(s->table[i] > s->size)
+        {
+            fprintf(stderr, "Invalid board input: %u\n", s->table[i]);
+            exit(-1);
+        }
+    }
+    printf("\n");
     return s;
 }
 
 int main()
 {
+    //setup
     struct sudoku * s = read_sudoku_from_stdin();
 
-    setup(s);
     printf("\nSudoku to solve:\n");
     print_sudoku(s);
+
+    setup(s);
+    if(s->status != 0)
+    {
+        printf("Invalid board\n");
+        return -1;
+    }
+
+    // stopwatch
     struct timespec time_start;
     timespec_get(&time_start,TIME_UTC);
 
+    // solve
     solve(s);
 
     struct timespec time_end;
     timespec_get(&time_end,TIME_UTC);
 
 
+    // calculate elapsed time
     float time_difference = time_end.tv_sec - time_start.tv_sec + (time_end.tv_nsec - time_start.tv_nsec)/(float)1000000000 ;
 
+    // display results
     printf("\n");
-    printf("Solved:\n");
-    print_sudoku(s);
+    if(s->status == 1)
+    {
+        printf("Solved:\n");
+        print_sudoku(s);
+    }
+    else
+    {
+        printf("Board is impossible to solve\n");
+    }
+
     printf("Number of boards explored = %u\n",FAILED);
     printf("Elapsed time = %.3fs\n",time_difference);
+
+    // cleanup
     destroy(s);
 }
