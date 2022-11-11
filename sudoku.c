@@ -7,6 +7,23 @@
 
 unsigned int FAILED = 0;
 
+struct timespec stopwatch_start()
+{
+    struct timespec time_start;
+    timespec_get(&time_start,TIME_UTC);
+    return time_start;
+}
+
+double stopwatch_stop(struct timespec time_start)
+{
+    struct timespec time_end;
+    timespec_get(&time_end,TIME_UTC);
+
+    // calculate elapsed time
+    double time_difference = time_end.tv_sec - time_start.tv_sec + (time_end.tv_nsec - time_start.tv_nsec)/(double)1000000000 ;
+    return time_difference;
+}
+
 void print_bits(unsigned long x)
 {
     int i;
@@ -400,19 +417,13 @@ int main()
         return -1;
     }
 
-    // stopwatch
-    struct timespec time_start;
-    timespec_get(&time_start,TIME_UTC);
+        // stopwatch
+    struct timespec solve_stopwatch = stopwatch_start();
 
     // solve
     solve(s);
 
-    struct timespec time_end;
-    timespec_get(&time_end,TIME_UTC);
-
-
-    // calculate elapsed time
-    float time_difference = time_end.tv_sec - time_start.tv_sec + (time_end.tv_nsec - time_start.tv_nsec)/(float)1000000000 ;
+    double solve_time = stopwatch_stop(solve_stopwatch);
 
     // display results
     printf("\n");
@@ -427,7 +438,7 @@ int main()
     }
 
     printf("Number of boards explored = %u\n",FAILED);
-    printf("Elapsed time = %.3fs\n",time_difference);
+    printf("Elapsed time = %.3fs\n",solve_time);
 
     // cleanup
     destroy(s);
