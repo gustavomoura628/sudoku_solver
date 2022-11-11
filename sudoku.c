@@ -145,7 +145,7 @@ void print_sudoku(struct sudoku * s)
         printf("\033[47;30m");
         for(j=0;j<s->size;j++)
         {
-            printf(" %2d ",s->table[j+i*s->size]);
+            printf("%2d ",s->table[j+i*s->size]);
             if(j%s->blocksize==s->blocksize-1 && j<s->size-1)printf("\033[40;30m||\033[47;30m");
         }
         printf("\033[m");
@@ -154,7 +154,7 @@ void print_sudoku(struct sudoku * s)
         {
             int k;
             printf("\033[40;30m");
-            for(k=0;k<4*s->size+2*(s->blocksize-1);k++)printf("|");
+            for(k=0;k<3*s->size+2*(s->blocksize-1);k++)printf("|");
             printf("\033[m");
             printf("\n");
         }
@@ -352,7 +352,8 @@ int main()
     struct sudoku * s = read_sudoku_from_stdin();
 
     setup(s);
-    //print_sudoku(s);
+    printf("\nSudoku to solve:\n");
+    print_sudoku(s);
     struct timespec time_start;
     timespec_get(&time_start,TIME_UTC);
 
@@ -365,6 +366,7 @@ int main()
     float time_difference = time_end.tv_sec - time_start.tv_sec + (time_end.tv_nsec - time_start.tv_nsec)/(float)1000000000 ;
 
     printf("\n");
+    printf("Solved:\n");
     print_sudoku(s);
     printf("Number of boards explored = %u\n",FAILED);
     printf("Elapsed time = %.3fs\n",time_difference);
