@@ -9,3 +9,5 @@ gcc -o sudoku sudoku.c
 ./sudoku
 
 Blocksize is the size of a block. This means that in a 9x9 board, blocks are 3x3, so blocksize is 3.
+
+![](screenshot.png)
