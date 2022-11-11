@@ -20,7 +20,7 @@ double stopwatch_stop(struct timespec time_start)
     timespec_get(&time_end,TIME_UTC);
 
     // calculate elapsed time
-    double time_difference = time_end.tv_sec - time_start.tv_sec + (time_end.tv_nsec - time_start.tv_nsec)/(double)1000000000 ;
+    double time_difference = time_end.tv_sec - time_start.tv_sec + (time_end.tv_nsec - time_start.tv_nsec)/(double)1000000000;
     return time_difference;
 }
 
@@ -35,15 +35,39 @@ void print_bits(unsigned long x)
     printf("\n");
 }
 
-unsigned int count_bits(unsigned long v) // count the number of bits set in v
+static const unsigned char BitsSetTable256[256] = 
 {
-    unsigned int c; // c accumulates the total bits set in v
-    for (c = 0; v; c++)
-    {
-      v &= v - 1; // clear the least significant bit set
-    }
+# define B2(n) n, n+1, n+1, n+2
+# define B4(n) B2(n), B2(n+1), B2(n+1),B2(n+2)
+# define B6(n) B4(n), B4(n+1), B4(n+1),B4(n+2)
+    B6(0), B6(1), B6(1), B6(2)
+};
+
+unsigned int count_bits(unsigned long v)
+{
+    unsigned int c;
+        // Option 2:
+    unsigned char * p = (unsigned char *) &v;
+    c = BitsSetTable256[p[0]] + 
+        BitsSetTable256[p[1]] + 
+        BitsSetTable256[p[2]] +	
+        BitsSetTable256[p[3]] +	
+        BitsSetTable256[p[4]] +	
+        BitsSetTable256[p[5]] +	
+        BitsSetTable256[p[6]] +	
+        BitsSetTable256[p[7]];
     return c;
 }
+//unsigned int count_bits(unsigned long v) // count the number of bits set in v
+//{
+//unsigned int c; // c accumulates the total bits set in v
+//for (c = 0; v; c++)
+//{
+//  v &= v - 1; // clear the least significant bit set
+//  counter++;
+//}
+//return c;
+//}
 
 
 struct sudoku{
@@ -72,31 +96,31 @@ struct sudoku * create(int blocksize)
 struct sudoku * copy(struct sudoku *s)
 {
     struct sudoku * c = create(s->blocksize);
-    c->blocksize = s->blocksize ;
-    c->size = s->size ;
+    c->blocksize = s->blocksize;
+    c->size = s->size;
     int i;
     for(i=0;i<s->size*s->size;i++)
-        c->table[i] = s->table[i] ;
+        c->table[i] = s->table[i];
     for(i=0;i<s->size;i++)
-        c->brow[i] = s->brow[i] ;
+        c->brow[i] = s->brow[i];
     for(i=0;i<s->size;i++)
-        c->bcolumn[i] = s->bcolumn[i] ;
+        c->bcolumn[i] = s->bcolumn[i];
     for(i=0;i<s->size;i++)
-        c->bblock[i] = s->bblock[i] ;
-    c->status = s->status ;
+        c->bblock[i] = s->bblock[i];
+    c->status = s->status;
     return c;
 }
 
 void copy_into(struct sudoku * dest, struct sudoku * src)
 {
-    dest->blocksize = src->blocksize ;
-    dest->size = src->size ;
+    dest->blocksize = src->blocksize;
+    dest->size = src->size;
     int i;
     memcpy(dest->table,src->table,src->size*src->size*sizeof(unsigned int));
     memcpy(dest->brow,src->brow,src->size*sizeof(unsigned long));
     memcpy(dest->bcolumn,src->bcolumn,src->size*sizeof(unsigned long));
     memcpy(dest->bblock,src->bblock,src->size*sizeof(unsigned long));
-    dest->status = src->status ;
+    dest->status = src->status;
 }
 
 void destroy(struct sudoku * s)
@@ -130,8 +154,8 @@ void setup(struct sudoku * s)
                 }
             }
         }
-//        printf("row %d = ",i);
-//        print_bits(s->brow[i]);
+    //        printf("row %d = ",i);
+    //        print_bits(s->brow[i]);
     }
     //column
     for(j=0;j<s->size;j++)
@@ -152,8 +176,8 @@ void setup(struct sudoku * s)
                 }
             }
         }
-//        printf("column %d = ",j);
-//        print_bits(s->bcolumn[j]);
+    //        printf("column %d = ",j);
+    //        print_bits(s->bcolumn[j]);
     }
     //block
     for(i=0;i<s->size;i++)
@@ -177,11 +201,11 @@ void setup(struct sudoku * s)
             }
         }
     }
-//    for(i=0;i<s->size;i++)
-//    {
-//        printf("block %d = ",i);
-//        print_bits(s->bblock[i]);
-//    }
+    //    for(i=0;i<s->size;i++)
+    //    {
+    //        printf("block %d = ",i);
+    //        print_bits(s->bblock[i]);
+    //    }
 }
 
 void print_sudoku(struct sudoku * s)
@@ -221,35 +245,10 @@ int bit_position(unsigned long x)
 
 void solve(struct sudoku * s);
 
-void branch(struct sudoku * s)
+void branch(struct sudoku * s, int index)
 {
     //print_sudoku(s);
     int i,j;
-    int index;
-    unsigned int min_bits = 999999;
-
-    //finding index
-    for(i=0;i<s->size;i++)
-    {
-        for(j=0;j<s->size;j++)
-        {
-            if(!s->table[j+i*s->size])
-            {
-                unsigned long available =   s->brow[i]
-                                          & s->bcolumn[j]
-                                          & s->bblock[(j/s->blocksize)+(i/s->blocksize)*s->blocksize];
-
-                int nbits = count_bits(available);
-
-                if(nbits < min_bits)
-                {
-                    index = j+i*s->size;
-                    min_bits = nbits;
-                }
-            }
-        }
-    }
-
     j=index%s->size;
     i=index/s->size;
     //printf("Best place to branch = (%d,%d) = ",i,j);
@@ -307,6 +306,8 @@ void solve(struct sudoku * s)
         int has_ambiguous_value = 0;
         int updated_something = 0;
         int has_impossible_value = 0;
+        int min_index;
+        int min_bits = 999999;
         for(i=0;i<s->size;i++)
         {
             for(j=0;j<s->size;j++)
@@ -322,9 +323,10 @@ void solve(struct sudoku * s)
                     int nbits = count_bits(available);
 
                     if(nbits==0)
+                    {
                         has_impossible_value=1;
-
-                    if(nbits == 1)
+                    }
+                    else if(nbits == 1)
                     {
                         //printf("row =    ");
                         //print_bits(s->brow[i]);
@@ -342,10 +344,18 @@ void solve(struct sudoku * s)
 
                         //track failed attempts
                         //printf("\033[0;0H\033[47;30m");
-//                        printf("\033[0;0H");
-//                        print_sudoku(s);
-//                        printf("Failed %20d times\n",FAILED);
+    //                        printf("\033[0;0H");
+    //                        print_sudoku(s);
+    //                        printf("Failed %20d times\n",FAILED);
                         //printf("\033[m");
+                    }
+                    else
+                    {
+                        if(nbits < min_bits)
+                        {
+                            min_bits = nbits;
+                            min_index = j+i*s->size;
+                        }
                     }
                 }
             }
@@ -363,23 +373,11 @@ void solve(struct sudoku * s)
         }
         else if(!updated_something)
         {
-            branch(s);
+            branch(s, min_index);
             return;
         }
     }
 }
-
-int testsudoku[9*9] = {
-0,0,3,0,2,0,6,0,0,
-9,0,0,3,0,5,0,0,0,
-0,0,1,8,0,6,4,0,0,
-0,0,8,1,0,2,9,0,0,
-7,0,0,0,0,0,0,0,0,
-0,0,6,7,0,8,2,0,0,
-0,0,2,6,0,0,5,0,0,
-8,0,0,2,0,3,0,0,0,
-0,0,5,0,1,0,3,0,0
-};
 
 struct sudoku * read_sudoku_from_stdin()
 {
@@ -417,7 +415,7 @@ int main()
         return -1;
     }
 
-        // stopwatch
+    // stopwatch
     struct timespec solve_stopwatch = stopwatch_start();
 
     // solve
